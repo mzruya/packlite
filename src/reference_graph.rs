@@ -2,9 +2,11 @@ use std::{collections::HashMap, path::PathBuf, rc::Rc};
 
 use itertools::Itertools;
 use petgraph::{graphmap::GraphMap, Directed, Direction};
+use tracing::instrument;
 
 use crate::{constant::Definition, reference_resolver::ResolvedReference};
 
+#[derive(Debug)]
 struct NodeIndex {
     max_node_id: usize,
     node_to_id: HashMap<Node, usize>,
@@ -103,6 +105,7 @@ pub struct ReferenceGraph {
     references: HashMap<String, Vec<Node>>,
 }
 
+#[instrument(skip_all)]
 pub fn build_reference_graph(definitions: Vec<Definition>, references: Vec<ResolvedReference>) -> ReferenceGraph {
     let mut graph = GraphMap::<usize, (), Directed>::with_capacity(references.len(), references.len());
 
@@ -146,7 +149,6 @@ pub fn build_reference_graph(definitions: Vec<Definition>, references: Vec<Resol
     }
 }
 
-#[derive(Debug)]
 pub struct Usage {
     pub name: String,
     pub path: PathBuf,
@@ -154,6 +156,7 @@ pub struct Usage {
 }
 
 impl ReferenceGraph {
+    #[instrument(skip(self))]
     pub fn find_usages(&self, name: &str) -> Vec<Usage> {
         let mut usages: Vec<Usage> = Vec::new();
         let empty_vec = Vec::new();

@@ -4,45 +4,43 @@ mod files;
 mod packages;
 mod reference_graph;
 mod reference_resolver;
-use stopwatch::Stopwatch;
+use tracing::debug;
 
 fn main() {
-    // let pool = rayon::ThreadPoolBuilder::new().num_threads(16).build().unwrap();
-    // pool.install(|| {
-    //     do_run("/Users/matan.zruya/workspace/gusto/zenpayroll/packs");
-    // });
+    install_logger();
 
     do_run("/Users/matan.zruya/workspace/gusto/zenpayroll/packs");
 }
 
+fn install_logger() {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_target(true)
+        .with_timer(tracing_subscriber::fmt::time::uptime())
+        .with_level(true)
+        .with_writer(std::io::stderr)
+        .init();
+}
+
 fn do_run(path: &str) {
-    let mut sw = Stopwatch::start_new();
+    // Lists all the `.rb` and `package.yml` files inside a folder
+    let file_paths = files::all(path);
+    debug!("files::all(path)");
 
-    sw.start();
-    let package_files = files::all(path);
-    println!("files::all(path) took {}ms", sw.elapsed_ms());
+    // Groups ruby file paths into packages, each package includes the ruby constant references and definitions.
+    let packages = packages::build(file_paths);
+    debug!("packages::build(package_files)");
 
-    sw.start();
-    let packages = packages::build(package_files);
-    println!("packages::build(package_files) took {}ms", sw.elapsed_ms());
-
-    sw.start();
+    // Resolves ruby constant definitions to the fully qualified constant they refer to.
     let resolved_references = reference_resolver::resolve(&packages.definitions, &packages.references);
-    println!(
-        "reference_resolver::resolve(&packages.definitions, packages.references) took {}ms",
-        sw.elapsed_ms()
-    );
+    debug!("reference_resolver::resolve(&packages.definitions, packages.references)",);
 
-    sw.start();
+    // Indexes all the references and definitions into a graph data structure.
     let reference_graph = reference_graph::build_reference_graph(packages.definitions, resolved_references);
-    println!(
-        "graph::build(&packages.definitions, &resolved_references) took {}ms",
-        sw.elapsed_ms()
-    );
+    debug!("graph::build(&packages.definitions, &resolved_references)",);
 
-    sw.start();
     let usages = reference_graph.find_usages("Pufferfish::ValueProviders::Company");
-    println!("graph.find_usages took {}ms", sw.elapsed_ms());
+    debug!("graph.find_usages()");
 
-    println!("{usages:#?}");
+    // println!("{usages:#?}");
 }

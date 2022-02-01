@@ -2,11 +2,12 @@ use std::path::PathBuf;
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
+use tracing::{debug, instrument};
 
 use crate::{
     ast_parser::{self, ParsedFile},
     constant::{Definition, Reference},
-    files::PackageFiles,
+    files::FilePath,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -32,12 +33,18 @@ pub struct Package {
     pub ruby_file_paths: Vec<PathBuf>,
 }
 
-pub fn build(package_files: Vec<PackageFiles>) -> Packages {
+#[instrument(skip_all)]
+pub fn build(file_paths: Vec<FilePath>) -> Packages {
+    let package_files = group_files_into_packages(file_paths);
+    debug!("group_files_into_packages(file_paths)");
+
     let ruby_file_paths: Vec<&PathBuf> = package_files
         .iter()
         .flat_map(|package_files| &package_files.ruby_file_paths)
         .collect();
+
     let (definitions, references) = parse_ruby_files(&ruby_file_paths);
+    debug!("parse_ruby_files(&ruby_file_paths)");
 
     let packages: Vec<Package> = package_files
         .into_iter()
@@ -55,6 +62,7 @@ pub fn build(package_files: Vec<PackageFiles>) -> Packages {
             }
         })
         .collect();
+    debug!("package_files grouped");
 
     Packages {
         packages,
@@ -63,12 +71,53 @@ pub fn build(package_files: Vec<PackageFiles>) -> Packages {
     }
 }
 
+pub struct PackageFiles {
+    pub package_root: PathBuf,
+    pub package_file_path: PathBuf,
+    pub ruby_file_paths: Vec<PathBuf>,
+}
+
+#[instrument(skip_all)]
+fn group_files_into_packages(file_paths: Vec<FilePath>) -> Vec<PackageFiles> {
+    let mut ruby_files: Vec<PathBuf> = Vec::new();
+    let mut package_files: Vec<PathBuf> = Vec::new();
+
+    for file_path in file_paths {
+        match file_path {
+            FilePath::Ruby(path) => ruby_files.push(path),
+            FilePath::Package(path) => package_files.push(path),
+        }
+    }
+
+    package_files
+        .iter()
+        .par_bridge()
+        .map(|package_file_path| {
+            let package_root = package_file_path.parent().unwrap();
+
+            let ruby_file_paths: Vec<PathBuf> = ruby_files
+                .iter()
+                .filter(|ruby_file_path| ruby_file_path.starts_with(package_root))
+                .cloned()
+                .collect();
+
+            PackageFiles {
+                package_root: package_root.to_owned(),
+                package_file_path: package_file_path.to_owned(),
+                ruby_file_paths,
+            }
+        })
+        .collect()
+}
+
+#[instrument(skip_all)]
 fn parse_ruby_files(ruby_files: &[&PathBuf]) -> (Vec<Definition>, Vec<Reference>) {
     let parsed_files: Vec<ParsedFile> = ruby_files
         .iter()
         .par_bridge()
         .map(|path| ast_parser::parse_ast(path))
         .collect();
+    debug!("ast_parser::parse_ast(path)");
 
     let mut definitions: Vec<Definition> = Vec::new();
     let mut references: Vec<Reference> = Vec::new();
@@ -77,6 +126,7 @@ fn parse_ruby_files(ruby_files: &[&PathBuf]) -> (Vec<Definition>, Vec<Reference>
         definitions.append(&mut parsed_file.definitions);
         references.append(&mut parsed_file.references);
     }
+    debug!("flattened file paths");
 
     (definitions, references)
 }
