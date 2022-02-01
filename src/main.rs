@@ -39,7 +39,7 @@ fn do_run(path: &str) {
     let reference_graph = reference_graph::build_reference_graph(packages.definitions, resolved_references);
     debug!("graph::build(&packages.definitions, &resolved_references)",);
 
-    let usages = reference_graph.find_usages("Pufferfish::ValueProviders::Company");
+    let _usages = reference_graph.find_usages("Pufferfish::ValueProviders::Company");
     debug!("graph.find_usages()");
 
     // println!("{usages:#?}");

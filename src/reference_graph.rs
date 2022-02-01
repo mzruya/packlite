@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf, rc::Rc};
+use std::{collections::HashMap, path::PathBuf};
 
 use itertools::Itertools;
 use petgraph::{graphmap::GraphMap, Directed, Direction};
@@ -23,7 +23,7 @@ impl NodeIndex {
     }
 
     pub fn get_id_for_node(&self, node: &Node) -> Option<usize> {
-        self.node_to_id.get(node).map(|id| *id)
+        self.node_to_id.get(node).copied()
     }
 
     pub fn get_node_for_id(&self, id: usize) -> Option<&Node> {
@@ -31,7 +31,7 @@ impl NodeIndex {
     }
 
     pub fn index(&mut self, node: &Node) -> usize {
-        let ref mut max_node_id = self.max_node_id;
+        let max_node_id = &mut self.max_node_id;
 
         let node_id = *self.node_to_id.entry(node.clone()).or_insert_with(|| {
             let node_id = *max_node_id;
