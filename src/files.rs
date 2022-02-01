@@ -1,7 +1,7 @@
 use std::{ffi::OsStr, path::PathBuf};
 
 use jwalk::WalkDir;
-use rayon::iter::{ParallelIterator};
+use rayon::iter::ParallelIterator;
 use tracing::instrument;
 
 #[derive(Debug)]
