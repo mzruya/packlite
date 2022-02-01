@@ -1,0 +1,83 @@
+ParsedFile {
+    path: "./fixtures/nested_classes.rb",
+    definitions: [
+        Definition {
+            path: "./fixtures/nested_classes.rb",
+            scope: None,
+            name: "A",
+            loc: 0...5,
+        },
+        Definition {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A",
+            ),
+            name: "B",
+            loc: 10...15,
+        },
+        Definition {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A::B",
+            ),
+            name: "C",
+            loc: 22...27,
+        },
+        Definition {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A::B::C",
+            ),
+            name: "DD::EE",
+            loc: 36...41,
+        },
+    ],
+    references: [
+        Reference {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A::B::C::DD::EE",
+            ),
+            name: "InD",
+            loc: 76...79,
+        },
+        Reference {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A::B::C::DD::EE",
+            ),
+            name: "B::InD",
+            loc: 93...96,
+        },
+        Reference {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A::B::C",
+            ),
+            name: "InC",
+            loc: 143...146,
+        },
+        Reference {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A::B",
+            ),
+            name: "InB",
+            loc: 186...189,
+        },
+        Reference {
+            path: "./fixtures/nested_classes.rb",
+            scope: Some(
+                "A",
+            ),
+            name: "InA",
+            loc: 221...224,
+        },
+        Reference {
+            path: "./fixtures/nested_classes.rb",
+            scope: None,
+            name: "A::B::C",
+            loc: 242...243,
+        },
+    ],
+}

@@ -1,0 +1,15 @@
+[package]
+name = "packlite"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+itertools = "0.10.3"
+jwalk = "0.6.0"
+lib-ruby-parser = "4.0.0"
+petgraph = "0.6.0"
+rayon = "1.5.1"
+serde = { version = "1.0.136", features = ["derive"] }
+serde_yaml = "0.8.23"
+stopwatch = "0.0.7"
+yaml-rust = "0.4.5"
