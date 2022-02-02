@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::{Deserialize, Serialize};
@@ -26,15 +26,26 @@ pub struct Packages {
 
 #[derive(Debug)]
 pub struct Package {
-    pub root: PathBuf,
+    pub name: String,
     pub enforce_dependencies: bool,
     pub enforce_privacy: bool,
     pub dependencies: Vec<String>,
     pub ruby_file_paths: Vec<PathBuf>,
 }
 
+fn package_name(project_root: &Path, package_root: &Path) -> String {
+    let absolute_package_root = std::fs::canonicalize(package_root).unwrap();
+    let absolute_project_root = std::fs::canonicalize(project_root).unwrap();
+
+    absolute_package_root
+        .strip_prefix(&absolute_project_root)
+        .unwrap()
+        .to_string_lossy()
+        .to_string()
+}
+
 #[instrument(skip_all)]
-pub fn build(file_paths: Vec<FilePath>) -> Packages {
+pub fn build(file_paths: Vec<FilePath>, project_root: &Path) -> Packages {
     let package_files = group_files_into_packages(file_paths);
     debug!("group_files_into_packages(file_paths)");
 
@@ -54,7 +65,7 @@ pub fn build(file_paths: Vec<FilePath>) -> Packages {
             let package: SerializablePackage = serde_yaml::from_str(&text).unwrap();
 
             Package {
-                root: package_files.package_root,
+                name: package_name(project_root, &package_files.package_root),
                 enforce_dependencies: package.enforce_dependencies,
                 enforce_privacy: package.enforce_privacy,
                 dependencies: package.dependencies.unwrap_or_default(),

@@ -35,13 +35,13 @@ fn install_logger() {
         .init();
 }
 
-fn do_run(path: &Path) {
+fn do_run(project_root: &Path) {
     // Lists all the `.rb` and `package.yml` files inside path
-    let file_paths = files::all(path);
+    let file_paths = files::all(project_root);
     debug!("files::all(path)");
 
     // Groups ruby file paths into packages, each package includes the ruby constant references and definitions.
-    let packages = packages::build(file_paths);
+    let packages = packages::build(file_paths, project_root);
     debug!("packages::build(package_files)");
 
     // Resolves ruby constant references to the fully qualified constant they refer to.
