@@ -27,10 +27,10 @@ pub struct Packages {
 #[derive(Debug)]
 pub struct Package {
     pub name: String,
+    pub root: PathBuf,
     pub enforce_dependencies: bool,
     pub enforce_privacy: bool,
     pub dependencies: Vec<String>,
-    pub ruby_file_paths: Vec<PathBuf>,
 }
 
 fn package_name(project_root: &Path, package_root: &Path) -> String {
@@ -66,10 +66,10 @@ pub fn build(file_paths: Vec<FilePath>, project_root: &Path) -> Packages {
 
             Package {
                 name: package_name(project_root, &package_files.package_root),
+                root: package_files.package_root,
                 enforce_dependencies: package.enforce_dependencies,
                 enforce_privacy: package.enforce_privacy,
                 dependencies: package.dependencies.unwrap_or_default(),
-                ruby_file_paths: package_files.ruby_file_paths,
             }
         })
         .collect();
