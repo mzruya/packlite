@@ -4,12 +4,28 @@ mod files;
 mod packages;
 mod reference_graph;
 mod reference_resolver;
+use std::{path::{Path, PathBuf}};
+
+use clap::Parser;
 use tracing::debug;
+
+#[derive(Parser, Debug)]
+#[clap(author, version, about, long_about = None)]
+enum CliCommand {
+    Validate {
+        #[clap(default_value = ".")]
+        path: PathBuf,
+    },
+}
 
 fn main() {
     install_logger();
 
-    do_run("/Users/matan.zruya/workspace/gusto/zenpayroll/packs");
+    let command = CliCommand::parse();
+
+    match command {
+        CliCommand::Validate { ref path  } => do_run(path)
+    }
 }
 
 fn install_logger() {
@@ -22,7 +38,7 @@ fn install_logger() {
         .init();
 }
 
-fn do_run(path: &str) {
+fn do_run(path: &Path) {
     // Lists all the `.rb` and `package.yml` files inside a folder
     let file_paths = files::all(path);
     debug!("files::all(path)");

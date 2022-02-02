@@ -1,7 +1,9 @@
-use std::{ffi::OsStr, path::PathBuf};
+use std::{
+    ffi::OsStr,
+    path::{Path, PathBuf},
+};
 
 use jwalk::WalkDir;
-use rayon::iter::ParallelIterator;
 use tracing::instrument;
 
 #[derive(Debug)]
@@ -11,7 +13,7 @@ pub enum FilePath {
 }
 
 #[instrument]
-pub fn all(root_path: &str) -> Vec<FilePath> {
+pub fn all(root_path: &Path) -> Vec<FilePath> {
     WalkDir::new(root_path)
         .into_iter()
         .filter_map(|entry| {

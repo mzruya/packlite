@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "3.0.14", features = ["derive"] }
 itertools = "0.10.3"
 jwalk = "0.6.0"
 lib-ruby-parser = "4.0.0"
