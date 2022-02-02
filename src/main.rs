@@ -4,7 +4,7 @@ mod files;
 mod packages;
 mod reference_graph;
 mod reference_resolver;
-use std::{path::{Path, PathBuf}};
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use tracing::debug;
@@ -12,10 +12,7 @@ use tracing::debug;
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 enum CliCommand {
-    Validate {
-        #[clap(default_value = ".")]
-        path: PathBuf,
-    },
+    Validate { path: PathBuf },
 }
 
 fn main() {
@@ -24,7 +21,7 @@ fn main() {
     let command = CliCommand::parse();
 
     match command {
-        CliCommand::Validate { ref path  } => do_run(path)
+        CliCommand::Validate { ref path } => do_run(path),
     }
 }
 
@@ -39,7 +36,7 @@ fn install_logger() {
 }
 
 fn do_run(path: &Path) {
-    // Lists all the `.rb` and `package.yml` files inside a folder
+    // Lists all the `.rb` and `package.yml` files inside path
     let file_paths = files::all(path);
     debug!("files::all(path)");
 
@@ -47,7 +44,7 @@ fn do_run(path: &Path) {
     let packages = packages::build(file_paths);
     debug!("packages::build(package_files)");
 
-    // Resolves ruby constant definitions to the fully qualified constant they refer to.
+    // Resolves ruby constant references to the fully qualified constant they refer to.
     let resolved_references = reference_resolver::resolve(&packages.definitions, &packages.references);
     debug!("reference_resolver::resolve(&packages.definitions, packages.references)",);
 

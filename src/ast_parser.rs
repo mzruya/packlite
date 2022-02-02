@@ -45,11 +45,7 @@ fn parse_text(text: &str, path: &Path) -> (Vec<Definition>, Vec<Reference>) {
 
 #[cfg(test)]
 mod tests {
-    use std::path::{Path, PathBuf};
-
-    fn absolute_path(path: &str) -> PathBuf {
-        std::fs::canonicalize(Path::new(path)).unwrap()
-    }
+    use std::path::Path;
 
     fn remove_absolute_paths(string: String) -> String {
         let current_dir = std::env::current_dir().unwrap();
@@ -57,7 +53,7 @@ mod tests {
     }
 
     fn test_fixture(ruby_file_path: &str, expectation_file_path: &str) {
-        let parsed_file = super::parse_ast(&absolute_path(ruby_file_path));
+        let parsed_file = super::parse_ast(Path::new(ruby_file_path));
 
         let actual = remove_absolute_paths(format!("{parsed_file:#?}"));
 
