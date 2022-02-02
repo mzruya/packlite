@@ -46,27 +46,30 @@ fn package_name(project_root: &Path, package_root: &Path) -> String {
 
 #[instrument(skip_all)]
 pub fn build(file_paths: Vec<FilePath>, project_root: &Path) -> Packages {
-    let package_files = group_files_into_packages(file_paths);
-    debug!("group_files_into_packages(file_paths)");
+    let mut ruby_file_paths: Vec<PathBuf> = Vec::new();
+    let mut package_file_paths: Vec<PathBuf> = Vec::new();
 
-    let ruby_file_paths: Vec<&PathBuf> = package_files
-        .iter()
-        .flat_map(|package_files| &package_files.ruby_file_paths)
-        .collect();
+    for file_path in file_paths {
+        match file_path {
+            FilePath::Ruby(path) => ruby_file_paths.push(path),
+            FilePath::Package(path) => package_file_paths.push(path),
+        }
+    }
 
     let (definitions, references) = parse_ruby_files(&ruby_file_paths);
     debug!("parse_ruby_files(&ruby_file_paths)");
 
-    let packages: Vec<Package> = package_files
+    let packages: Vec<Package> = package_file_paths
         .into_iter()
         .par_bridge()
-        .map(|package_files| {
-            let text = std::fs::read_to_string(package_files.package_file_path).unwrap();
+        .map(|package_file_path| {
+            let package_root = package_file_path.parent().unwrap().to_owned();
+            let text = std::fs::read_to_string(&package_file_path).unwrap();
             let package: SerializablePackage = serde_yaml::from_str(&text).unwrap();
 
             Package {
-                name: package_name(project_root, &package_files.package_root),
-                root: package_files.package_root,
+                name: package_name(project_root, &package_root),
+                root: package_file_path.parent().unwrap().to_owned(),
                 enforce_dependencies: package.enforce_dependencies,
                 enforce_privacy: package.enforce_privacy,
                 dependencies: package.dependencies.unwrap_or_default(),
@@ -82,47 +85,8 @@ pub fn build(file_paths: Vec<FilePath>, project_root: &Path) -> Packages {
     }
 }
 
-pub struct PackageFiles {
-    pub package_root: PathBuf,
-    pub package_file_path: PathBuf,
-    pub ruby_file_paths: Vec<PathBuf>,
-}
-
 #[instrument(skip_all)]
-fn group_files_into_packages(file_paths: Vec<FilePath>) -> Vec<PackageFiles> {
-    let mut ruby_files: Vec<PathBuf> = Vec::new();
-    let mut package_files: Vec<PathBuf> = Vec::new();
-
-    for file_path in file_paths {
-        match file_path {
-            FilePath::Ruby(path) => ruby_files.push(path),
-            FilePath::Package(path) => package_files.push(path),
-        }
-    }
-
-    package_files
-        .iter()
-        .par_bridge()
-        .map(|package_file_path| {
-            let package_root = package_file_path.parent().unwrap();
-
-            let ruby_file_paths: Vec<PathBuf> = ruby_files
-                .iter()
-                .filter(|ruby_file_path| ruby_file_path.starts_with(package_root))
-                .cloned()
-                .collect();
-
-            PackageFiles {
-                package_root: package_root.to_owned(),
-                package_file_path: package_file_path.to_owned(),
-                ruby_file_paths,
-            }
-        })
-        .collect()
-}
-
-#[instrument(skip_all)]
-fn parse_ruby_files(ruby_files: &[&PathBuf]) -> (Vec<Definition>, Vec<Reference>) {
+fn parse_ruby_files(ruby_files: &[PathBuf]) -> (Vec<Definition>, Vec<Reference>) {
     let parsed_files: Vec<ParsedFile> = ruby_files
         .iter()
         .par_bridge()
