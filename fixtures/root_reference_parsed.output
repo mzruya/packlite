@@ -1,0 +1,59 @@
+ParsedFile {
+    path: "./fixtures/root_reference.rb",
+    definitions: [
+        Definition {
+            path: "./fixtures/root_reference.rb",
+            scope: None,
+            name: "B",
+            loc: 0...1,
+        },
+        Definition {
+            path: "./fixtures/root_reference.rb",
+            scope: None,
+            name: "A",
+            loc: 7...12,
+        },
+        Definition {
+            path: "./fixtures/root_reference.rb",
+            scope: Some(
+                "A",
+            ),
+            name: "B",
+            loc: 17...22,
+        },
+    ],
+    references: [
+        Reference {
+            path: "./fixtures/root_reference.rb",
+            scope: Some(
+                "A::B",
+            ),
+            name: "::A",
+            loc: 45...46,
+        },
+        Reference {
+            path: "./fixtures/root_reference.rb",
+            scope: Some(
+                "A::B",
+            ),
+            name: "A",
+            loc: 53...54,
+        },
+        Reference {
+            path: "./fixtures/root_reference.rb",
+            scope: Some(
+                "A::B",
+            ),
+            name: "B",
+            loc: 61...62,
+        },
+        Reference {
+            path: "./fixtures/root_reference.rb",
+            scope: Some(
+                "A::B",
+            ),
+            name: "::B",
+            loc: 71...72,
+        },
+    ],
+}

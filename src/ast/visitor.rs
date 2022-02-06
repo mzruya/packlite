@@ -6,7 +6,7 @@ use lib_ruby_parser::{
     Node,
 };
 
-use crate::constant::Constant;
+use super::constant::Constant;
 
 pub struct Visitor {
     pub path: PathBuf,
@@ -96,10 +96,8 @@ impl visitor::Visitor for Visitor {
 
         self.definitions.push(definition);
 
-        self.definitions
-            .append(&mut nest_constants(&self.path, &name, visitor.definitions));
-        self.references
-            .append(&mut nest_constants(&self.path, &name, visitor.references));
+        self.definitions.append(&mut nest_constants(&self.path, &name, visitor.definitions));
+        self.references.append(&mut nest_constants(&self.path, &name, visitor.references));
     }
 
     fn on_module(&mut self, node: &nodes::Module) {
@@ -119,10 +117,8 @@ impl visitor::Visitor for Visitor {
         }
 
         self.definitions.push(definition);
-        self.definitions
-            .append(&mut nest_constants(&self.path, &name, visitor.definitions));
-        self.references
-            .append(&mut nest_constants(&self.path, &name, visitor.references));
+        self.definitions.append(&mut nest_constants(&self.path, &name, visitor.definitions));
+        self.references.append(&mut nest_constants(&self.path, &name, visitor.references));
     }
 
     fn on_const(&mut self, node: &nodes::Const) {

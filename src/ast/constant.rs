@@ -48,10 +48,6 @@ impl From<Constant> for Definition {
 }
 
 impl Reference {
-    pub fn qualified(&self) -> String {
-        qualified(&self.scope, &self.name)
-    }
-
     pub fn nestings(&self) -> Vec<String> {
         let mut nestings = Vec::new();
 
@@ -102,19 +98,13 @@ mod tests {
 
     #[test]
     fn test_qualified() {
-        let reference: Reference = constant().into();
         let definition: Definition = constant().into();
-
-        assert_eq!(reference.qualified(), "A::B::C::InC".to_owned());
         assert_eq!(definition.qualified(), "A::B::C::InC".to_owned());
     }
 
     #[test]
     fn test_nestings() {
         let reference: Reference = constant().into();
-        assert_eq!(
-            reference.nestings(),
-            vec!["A::B::C::InC", "A::B::InC", "A::InC", "InC"].to_owned()
-        );
+        assert_eq!(reference.nestings(), vec!["A::B::C::InC", "A::B::InC", "A::InC", "InC"].to_owned());
     }
 }

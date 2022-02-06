@@ -1,0 +1,7 @@
+[
+    ResolvedReference {
+        name: "A::B::C",
+        loc: 242...243,
+        path: "./fixtures/nested_classes.rb",
+    },
+]

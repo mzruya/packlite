@@ -346,6 +346,7 @@ dependencies = [
  "serde_yaml",
  "tracing",
  "tracing-subscriber",
+ "uid",
  "yaml-rust",
 ]
 
@@ -637,6 +638,12 @@ dependencies = [
  "tracing-core",
  "tracing-log",
 ]
+
+[[package]]
+name = "uid"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "281a11e4180ee68f8c06a7bf82d1be3c496e0debcadcc4576cc0b56132201edf"
 
 [[package]]
 name = "unicode-width"

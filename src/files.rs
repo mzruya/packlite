@@ -4,16 +4,62 @@ use std::{
 };
 
 use jwalk::WalkDir;
-use tracing::instrument;
+use rayon::iter::ParallelIterator;
+use tracing::{instrument, trace};
 
-#[derive(Debug)]
-pub enum FilePath {
-    Ruby(PathBuf),
-    Package(PathBuf),
+pub struct Package {
+    pub name: String,
+    pub root: PathBuf,
+    pub package_file: PathBuf,
+    pub ruby_files: Vec<PathBuf>,
 }
 
-#[instrument]
-pub fn all(root_path: &Path) -> Vec<FilePath> {
+enum SearchBy<'a> {
+    Extension(&'a str),
+    FileName(&'a str),
+}
+
+#[instrument(skip_all)]
+pub fn all(root_path: &Path) -> Vec<Package> {
+    let package_files = walkdir(root_path, SearchBy::FileName("package.yml"));
+
+    package_files
+        .into_iter()
+        .filter_map(|package_file| {
+            let package_root = package_file.parent().unwrap();
+
+            let ruby_files = walkdir(package_root, SearchBy::Extension("rb"));
+
+            let absolute_package_root = std::fs::canonicalize(package_root).unwrap();
+            let absolute_project_root = std::fs::canonicalize(root_path).unwrap();
+            let package_name = absolute_package_root
+                .strip_prefix(&absolute_project_root)
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+
+            // Not supporting the root package.
+            if package_name.is_empty() {
+                return None;
+            }
+
+            trace!("{}: found {} ruby files in {:?}", package_name, ruby_files.len(), &package_root);
+
+            Some(Package {
+                name: if package_name.is_empty() {
+                    "root".to_string()
+                } else {
+                    package_name
+                },
+                root: package_root.to_owned(),
+                package_file,
+                ruby_files,
+            })
+        })
+        .collect()
+}
+
+fn walkdir(root_path: &Path, search: SearchBy) -> Vec<PathBuf> {
     WalkDir::new(root_path)
         .into_iter()
         .filter_map(|entry| {
@@ -25,10 +71,13 @@ pub fn all(root_path: &Path) -> Vec<FilePath> {
 
             let path = entry.path();
 
-            if path.extension().unwrap_or_else(|| OsStr::new("")) == "rb" {
-                Some(FilePath::Ruby(path))
-            } else if path.file_name().unwrap() == "package.yml" {
-                Some(FilePath::Package(path))
+            let search_match = match search {
+                SearchBy::Extension(extension) => path.extension().unwrap_or_else(|| OsStr::new("")) == extension,
+                SearchBy::FileName(file_name) => path.file_name().unwrap() == file_name,
+            };
+
+            if search_match {
+                Some(path)
             } else {
                 None
             }

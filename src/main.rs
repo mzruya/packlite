@@ -1,9 +1,8 @@
-mod ast_parser;
-mod constant;
+mod ast;
+mod dependency_graph;
 mod files;
+mod package_validator;
 mod packages;
-mod reference_graph;
-mod reference_resolver;
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
@@ -11,18 +10,15 @@ use tracing::debug;
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
-enum CliCommand {
-    Validate { path: PathBuf },
+struct CliCommand {
+    path: PathBuf,
 }
 
 fn main() {
     install_logger();
 
     let command = CliCommand::parse();
-
-    match command {
-        CliCommand::Validate { ref path } => do_run(path),
-    }
+    do_run(&command.path)
 }
 
 fn install_logger() {
@@ -36,24 +32,25 @@ fn install_logger() {
 }
 
 fn do_run(project_root: &Path) {
-    // Lists all the `.rb` and `package.yml` files inside path
-    let file_paths = files::all(project_root);
-    debug!("files::all(path)");
+    // Walk the directory tree and find all ruby source files grouped by their respective packages
+    debug!("files::all()");
+    let packages = files::all(project_root);
+    debug!(
+        "{} packages, with {} total ruby files",
+        packages.len(),
+        packages.iter().map(|p| p.ruby_files.len()).sum::<usize>()
+    );
 
-    // Groups ruby file paths into packages, each package includes the ruby constant references and definitions.
-    let packages = packages::build(file_paths, project_root);
-    debug!("packages::build(package_files)");
-
-    // Resolves ruby constant references to the fully qualified constant they refer to.
-    let resolved_references = reference_resolver::resolve(&packages.definitions, &packages.references);
-    debug!("reference_resolver::resolve(&packages.definitions, packages.references)",);
+    // Convert file paths to actual data, by parsing the ast, doing reference lookups and the whole shebang
+    debug!("packages::parse()");
+    let packages = packages::parse(packages);
 
     // Indexes all the references and definitions into a graph data structure.
-    let reference_graph = reference_graph::build_reference_graph(packages.definitions, resolved_references);
-    debug!("graph::build(&packages.definitions, &resolved_references)",);
+    debug!("graph::build()",);
+    let dependency_graph = dependency_graph::build(&packages);
 
-    let _usages = reference_graph.find_usages("Pufferfish::ValueProviders::Company");
-    debug!("graph.find_usages()");
+    debug!("package_validator::build()");
+    let package_validator = package_validator::build(dependency_graph);
 
-    // println!("{usages:#?}");
+    println!("Found {} violations", package_validator.validate_all().len());
 }

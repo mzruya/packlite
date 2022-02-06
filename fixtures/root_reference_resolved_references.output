@@ -1,0 +1,22 @@
+[
+    ResolvedReference {
+        name: "A",
+        loc: 45...46,
+        path: "./fixtures/root_reference.rb",
+    },
+    ResolvedReference {
+        name: "A",
+        loc: 53...54,
+        path: "./fixtures/root_reference.rb",
+    },
+    ResolvedReference {
+        name: "A::B",
+        loc: 61...62,
+        path: "./fixtures/root_reference.rb",
+    },
+    ResolvedReference {
+        name: "B",
+        loc: 71...72,
+        path: "./fixtures/root_reference.rb",
+    },
+]
