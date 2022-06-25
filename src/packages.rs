@@ -91,7 +91,7 @@ pub fn parse(packages: Vec<crate::files::Package>) -> Vec<Package> {
                 .map(|definition| Definition {
                     id: DefinitionId::new(),
                     package_id,
-                    name: definition.name,
+                    name: definition.qualified(),
                     loc: definition.loc,
                     path: definition.path,
                 })

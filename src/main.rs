@@ -1,8 +1,8 @@
 mod ast;
 mod dependency_graph;
 mod files;
-mod package_validator;
 mod packages;
+mod validator;
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
@@ -35,11 +35,7 @@ fn do_run(project_root: &Path) {
     // Walk the directory tree and find all ruby source files grouped by their respective packages
     debug!("files::all()");
     let packages = files::all(project_root);
-    debug!(
-        "{} packages, with {} total ruby files",
-        packages.len(),
-        packages.iter().map(|p| p.ruby_files.len()).sum::<usize>()
-    );
+    debug!("{} packages, with {} total ruby files", packages.len(), packages.iter().map(|p| p.ruby_files.len()).sum::<usize>());
 
     // Convert file paths to actual data, by parsing the ast, doing reference lookups and the whole shebang
     debug!("packages::parse()");
@@ -50,7 +46,7 @@ fn do_run(project_root: &Path) {
     let dependency_graph = dependency_graph::build(&packages);
 
     debug!("package_validator::build()");
-    let package_validator = package_validator::build(dependency_graph);
+    let violations = validator::validate_all(&dependency_graph, validator::all_validators());
 
-    println!("Found {} violations", package_validator.validate_all().len());
+    println!("Found {:#?} violations", violations);
 }

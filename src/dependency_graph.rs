@@ -23,10 +23,7 @@ pub fn build(packages: &[Package]) -> DependencyGraph {
     let mut definitions_by_qualified_name: HashMap<&str, Vec<(DefinitionId, PackageId)>> = HashMap::new();
     for package in packages.iter() {
         for definition in &package.definitions {
-            definitions_by_qualified_name
-                .entry(&definition.name)
-                .or_insert_with(Vec::new)
-                .push((definition.id, package.id));
+            definitions_by_qualified_name.entry(&definition.name).or_insert_with(Vec::new).push((definition.id, package.id));
         }
     }
 
@@ -47,14 +44,8 @@ pub fn build(packages: &[Package]) -> DependencyGraph {
     }
 
     let id_to_packages: HashMap<PackageId, Vec<&Package>> = packages.iter().into_group_map_by(|package| package.id);
-    let id_to_definitions: HashMap<DefinitionId, Vec<&Definition>> = packages
-        .iter()
-        .flat_map(|package| &package.definitions)
-        .into_group_map_by(|defintion| defintion.id);
-    let id_to_references: HashMap<ReferenceId, Vec<&Reference>> = packages
-        .iter()
-        .flat_map(|package| &package.references)
-        .into_group_map_by(|reference| reference.id);
+    let id_to_definitions: HashMap<DefinitionId, Vec<&Definition>> = packages.iter().flat_map(|package| &package.definitions).into_group_map_by(|defintion| defintion.id);
+    let id_to_references: HashMap<ReferenceId, Vec<&Reference>> = packages.iter().flat_map(|package| &package.references).into_group_map_by(|reference| reference.id);
 
     let id_to_package = flatten_map(id_to_packages);
     let id_to_definition = flatten_map(id_to_definitions);
@@ -80,7 +71,7 @@ fn flatten_map<Key: std::fmt::Debug + std::hash::Hash + Eq, Value>(map: HashMap<
         })
         .collect()
 }
-pub struct Dependency {
+pub struct Edge {
     pub from_package: String,
     pub to_package: String,
     pub from: Reference,
@@ -88,13 +79,13 @@ pub struct Dependency {
 }
 
 impl<'a> DependencyGraph<'a> {
-    pub fn incoming_references(&self, package_id: PackageId) -> Vec<Dependency> {
+    pub fn incoming_references(&self, package_id: PackageId) -> Vec<Edge> {
         let _edges = self.graph.edges_directed(package_id, Direction::Incoming);
 
         todo!()
     }
 
-    pub fn outgoing_references(&self, package_id: PackageId) -> Vec<Dependency> {
+    pub fn outgoing_references(&self, package_id: PackageId) -> Vec<Edge> {
         let edges = self.graph.edges_directed(package_id, Direction::Outgoing);
 
         edges
@@ -104,7 +95,7 @@ impl<'a> DependencyGraph<'a> {
                 let from = *self.id_to_reference.get(reference_id).unwrap();
                 let to = *self.id_to_definition.get(definition_id).unwrap();
 
-                Dependency {
+                Edge {
                     from_package: from_package.name.clone(),
                     to_package: to_package.name.clone(),
                     from: from.to_owned(),

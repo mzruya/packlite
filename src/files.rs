@@ -32,11 +32,7 @@ pub fn all(root_path: &Path) -> Vec<Package> {
 
             let absolute_package_root = std::fs::canonicalize(package_root).unwrap();
             let absolute_project_root = std::fs::canonicalize(root_path).unwrap();
-            let package_name = absolute_package_root
-                .strip_prefix(&absolute_project_root)
-                .unwrap()
-                .to_string_lossy()
-                .to_string();
+            let package_name = absolute_package_root.strip_prefix(&absolute_project_root).unwrap().to_string_lossy().to_string();
 
             // Not supporting the root package.
             if package_name.is_empty() {
@@ -46,11 +42,7 @@ pub fn all(root_path: &Path) -> Vec<Package> {
             trace!("{}: found {} ruby files in {:?}", package_name, ruby_files.len(), &package_root);
 
             Some(Package {
-                name: if package_name.is_empty() {
-                    "root".to_string()
-                } else {
-                    package_name
-                },
+                name: if package_name.is_empty() { "root".to_string() } else { package_name },
                 root: package_root.to_owned(),
                 package_file,
                 ruby_files,

@@ -22,10 +22,7 @@ pub fn resolve(definitions: &[Definition], references: &[Reference]) -> Vec<Reso
         .filter_map(|reference| resolve_reference(&definition_by_qualified_name, reference))
         .collect();
 
-    resolved_references
-        .into_iter()
-        .sorted_by_key(|reference| reference.loc.begin)
-        .collect()
+    resolved_references.into_iter().sorted_by_key(|reference| reference.loc.begin).collect()
 }
 
 fn resolve_reference(definition_by_qualified_name: &HashMap<String, Vec<&Definition>>, reference: &Reference) -> Option<ResolvedReference> {
@@ -40,10 +37,7 @@ fn resolve_reference(definition_by_qualified_name: &HashMap<String, Vec<&Definit
             path: reference.path.clone(),
         })
     } else {
-        let name = reference
-            .nestings()
-            .into_iter()
-            .find(|nesting| definition_by_qualified_name.contains_key(nesting));
+        let name = reference.nestings().into_iter().find(|nesting| definition_by_qualified_name.contains_key(nesting));
 
         name.map(|name| ResolvedReference {
             name,
@@ -72,14 +66,8 @@ mod tests {
     #[test]
     fn test_fixtures() {
         let examples = [
-            (
-                "./fixtures/nested_classes.rb",
-                "./fixtures/nested_classes_resolved_references.output",
-            ),
-            (
-                "./fixtures/root_reference.rb",
-                "./fixtures/root_reference_resolved_references.output",
-            ),
+            ("./fixtures/nested_classes.rb", "./fixtures/nested_classes_resolved_references.output"),
+            ("./fixtures/root_reference.rb", "./fixtures/root_reference_resolved_references.output"),
         ];
 
         for (ruby_file_path, expectation_file_path) in examples {
