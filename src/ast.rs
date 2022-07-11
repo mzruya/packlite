@@ -3,7 +3,7 @@ mod parser;
 mod reference_resolver;
 mod visitor;
 
-pub use constant::{Definition, Reference};
+pub use constant::{Constant, Loc};
 pub use parser::parse as parse_ast;
 pub use parser::ParsedFile;
 pub use reference_resolver::{resolve, ResolvedReference};

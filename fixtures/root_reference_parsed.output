@@ -1,59 +1,122 @@
 ParsedFile {
     path: "./fixtures/root_reference.rb",
     definitions: [
-        Definition {
-            path: "./fixtures/root_reference.rb",
+        Constant {
             scope: None,
             name: "B",
-            loc: 0...1,
+            loc: Loc {
+                path: "./fixtures/root_reference.rb",
+                begin: CaretPos {
+                    line: 1,
+                    column: 1,
+                },
+                end: CaretPos {
+                    line: 1,
+                    column: 1,
+                },
+            },
         },
-        Definition {
-            path: "./fixtures/root_reference.rb",
+        Constant {
             scope: None,
             name: "A",
-            loc: 7...12,
+            loc: Loc {
+                path: "./fixtures/root_reference.rb",
+                begin: CaretPos {
+                    line: 3,
+                    column: 7,
+                },
+                end: CaretPos {
+                    line: 3,
+                    column: 7,
+                },
+            },
         },
-        Definition {
-            path: "./fixtures/root_reference.rb",
+        Constant {
             scope: Some(
                 "A",
             ),
             name: "B",
-            loc: 17...22,
+            loc: Loc {
+                path: "./fixtures/root_reference.rb",
+                begin: CaretPos {
+                    line: 4,
+                    column: 9,
+                },
+                end: CaretPos {
+                    line: 4,
+                    column: 9,
+                },
+            },
         },
     ],
     references: [
-        Reference {
-            path: "./fixtures/root_reference.rb",
+        Constant {
             scope: Some(
                 "A::B",
             ),
             name: "::A",
-            loc: 45...46,
+            loc: Loc {
+                path: "./fixtures/root_reference.rb",
+                begin: CaretPos {
+                    line: 6,
+                    column: 7,
+                },
+                end: CaretPos {
+                    line: 6,
+                    column: 7,
+                },
+            },
         },
-        Reference {
-            path: "./fixtures/root_reference.rb",
+        Constant {
             scope: Some(
                 "A::B",
             ),
             name: "A",
-            loc: 53...54,
+            loc: Loc {
+                path: "./fixtures/root_reference.rb",
+                begin: CaretPos {
+                    line: 7,
+                    column: 7,
+                },
+                end: CaretPos {
+                    line: 7,
+                    column: 7,
+                },
+            },
         },
-        Reference {
-            path: "./fixtures/root_reference.rb",
+        Constant {
             scope: Some(
                 "A::B",
             ),
             name: "B",
-            loc: 61...62,
+            loc: Loc {
+                path: "./fixtures/root_reference.rb",
+                begin: CaretPos {
+                    line: 8,
+                    column: 7,
+                },
+                end: CaretPos {
+                    line: 8,
+                    column: 7,
+                },
+            },
         },
-        Reference {
-            path: "./fixtures/root_reference.rb",
+        Constant {
             scope: Some(
                 "A::B",
             ),
             name: "::B",
-            loc: 71...72,
+            loc: Loc {
+                path: "./fixtures/root_reference.rb",
+                begin: CaretPos {
+                    line: 9,
+                    column: 7,
+                },
+                end: CaretPos {
+                    line: 9,
+                    column: 7,
+                },
+            },
         },
     ],
 }

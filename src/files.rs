@@ -4,14 +4,24 @@ use std::{
 };
 
 use jwalk::WalkDir;
-use rayon::iter::ParallelIterator;
-use tracing::{instrument, trace};
+use rayon::iter::{ParallelBridge, ParallelIterator};
+use serde::{Deserialize, Serialize};
+use tracing::instrument;
 
+#[derive(Serialize, Deserialize)]
+struct SerializablePackage {
+    enforce_dependencies: bool,
+    enforce_privacy: bool,
+    dependencies: Option<Vec<String>>,
+}
+
+#[derive(Serialize)]
 pub struct Package {
     pub name: String,
     pub root: PathBuf,
-    pub package_file: PathBuf,
-    pub ruby_files: Vec<PathBuf>,
+    pub enforce_dependencies: bool,
+    pub enforce_privacy: bool,
+    pub dependencies: Option<Vec<String>>,
 }
 
 enum SearchBy<'a> {
@@ -20,35 +30,51 @@ enum SearchBy<'a> {
 }
 
 #[instrument(skip_all)]
-pub fn all(root_path: &Path) -> Vec<Package> {
-    let package_files = walkdir(root_path, SearchBy::FileName("package.yml"));
+pub fn all_ruby_files(root_path: &Path, package_paths: &[PathBuf]) -> Vec<PathBuf> {
+    let ruby_files: Vec<PathBuf> = paths_to_scan(root_path, package_paths).iter().flat_map(|path| walkdir(path, SearchBy::Extension("rb"))).collect();
+    ruby_files.into_iter().par_bridge().map(|file| std::fs::canonicalize(file).unwrap()).collect()
+}
+
+#[instrument(skip_all)]
+pub fn all_packages(root_path: &Path, package_paths: &[PathBuf]) -> Vec<Package> {
+    let package_files: Vec<PathBuf> = paths_to_scan(root_path, package_paths)
+        .iter()
+        .flat_map(|path| walkdir(path, SearchBy::FileName("package.yml")))
+        .collect();
 
     package_files
         .into_iter()
+        .par_bridge()
         .filter_map(|package_file| {
             let package_root = package_file.parent().unwrap();
-
-            let ruby_files = walkdir(package_root, SearchBy::Extension("rb"));
-
             let absolute_package_root = std::fs::canonicalize(package_root).unwrap();
             let absolute_project_root = std::fs::canonicalize(root_path).unwrap();
             let package_name = absolute_package_root.strip_prefix(&absolute_project_root).unwrap().to_string_lossy().to_string();
-
-            // Not supporting the root package.
-            if package_name.is_empty() {
-                return None;
-            }
-
-            trace!("{}: found {} ruby files in {:?}", package_name, ruby_files.len(), &package_root);
+            let package_yaml: SerializablePackage = serde_yaml::from_str(&std::fs::read_to_string(package_file).unwrap()).unwrap();
 
             Some(Package {
                 name: if package_name.is_empty() { "root".to_string() } else { package_name },
-                root: package_root.to_owned(),
-                package_file,
-                ruby_files,
+                root: absolute_package_root,
+                enforce_dependencies: package_yaml.enforce_dependencies,
+                enforce_privacy: package_yaml.enforce_privacy,
+                dependencies: package_yaml.dependencies,
             })
         })
         .collect()
+}
+
+fn paths_to_scan(root_path: &Path, package_paths: &[PathBuf]) -> Vec<PathBuf> {
+    let mut paths_to_scan: Vec<PathBuf> = Vec::new();
+
+    if package_paths.is_empty() {
+        paths_to_scan.push(root_path.to_owned())
+    } else {
+        for package_path in package_paths {
+            paths_to_scan.push(root_path.join(package_path))
+        }
+    }
+
+    paths_to_scan
 }
 
 fn walkdir(root_path: &Path, search: SearchBy) -> Vec<PathBuf> {

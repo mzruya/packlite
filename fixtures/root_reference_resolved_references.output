@@ -1,22 +1,58 @@
 [
     ResolvedReference {
         name: "A",
-        loc: 45...46,
-        path: "./fixtures/root_reference.rb",
+        loc: Loc {
+            path: "./fixtures/root_reference.rb",
+            begin: CaretPos {
+                line: 6,
+                column: 7,
+            },
+            end: CaretPos {
+                line: 6,
+                column: 7,
+            },
+        },
     },
     ResolvedReference {
         name: "A",
-        loc: 53...54,
-        path: "./fixtures/root_reference.rb",
+        loc: Loc {
+            path: "./fixtures/root_reference.rb",
+            begin: CaretPos {
+                line: 7,
+                column: 7,
+            },
+            end: CaretPos {
+                line: 7,
+                column: 7,
+            },
+        },
     },
     ResolvedReference {
         name: "A::B",
-        loc: 61...62,
-        path: "./fixtures/root_reference.rb",
+        loc: Loc {
+            path: "./fixtures/root_reference.rb",
+            begin: CaretPos {
+                line: 8,
+                column: 7,
+            },
+            end: CaretPos {
+                line: 8,
+                column: 7,
+            },
+        },
     },
     ResolvedReference {
         name: "B",
-        loc: 71...72,
-        path: "./fixtures/root_reference.rb",
+        loc: Loc {
+            path: "./fixtures/root_reference.rb",
+            begin: CaretPos {
+                line: 9,
+                column: 7,
+            },
+            end: CaretPos {
+                line: 9,
+                column: 7,
+            },
+        },
     },
 ]

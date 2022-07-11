@@ -1,13 +1,14 @@
-use super::constant::{Definition, Reference};
+use super::constant::Constant;
 use super::visitor;
 use lib_ruby_parser::{traverse::visitor::Visitor, Parser, ParserOptions};
+use line_col::LineColLookup;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct ParsedFile {
     pub path: PathBuf,
-    pub definitions: Vec<Definition>,
-    pub references: Vec<Reference>,
+    pub definitions: Vec<Constant>,
+    pub references: Vec<Constant>,
 }
 
 pub fn parse(path: &Path) -> ParsedFile {
@@ -21,7 +22,7 @@ pub fn parse(path: &Path) -> ParsedFile {
     }
 }
 
-fn parse_text(text: &str, path: &Path) -> (Vec<Definition>, Vec<Reference>) {
+fn parse_text(text: &str, path: &Path) -> (Vec<Constant>, Vec<Constant>) {
     let parser = Parser::new(text, ParserOptions::default());
     let ast = parser.do_parse().ast;
 
@@ -29,12 +30,9 @@ fn parse_text(text: &str, path: &Path) -> (Vec<Definition>, Vec<Reference>) {
         return (Vec::new(), Vec::new());
     }
 
-    let mut visitor = visitor::Visitor::new(path);
+    let line_lookup = LineColLookup::new(text);
+    let mut visitor = visitor::Visitor::new(path, &line_lookup);
     visitor.visit(&ast.unwrap());
 
-    let definitions: Vec<Definition> = visitor.definitions.into_iter().map(|constant| constant.into()).collect();
-
-    let references: Vec<Reference> = visitor.references.into_iter().map(|constant| constant.into()).collect();
-
-    (definitions, references)
+    (visitor.definitions, visitor.references)
 }

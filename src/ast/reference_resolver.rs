@@ -1,19 +1,18 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 use itertools::Itertools;
-use lib_ruby_parser::Loc;
 use rayon::iter::{ParallelBridge, ParallelIterator};
+use serde::Serialize;
 
-use crate::ast::{Definition, Reference};
+use crate::ast::{Constant, Loc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ResolvedReference {
     pub name: String,
     pub loc: Loc,
-    pub path: PathBuf,
 }
 
-pub fn resolve(definitions: &[Definition], references: &[Reference]) -> Vec<ResolvedReference> {
+pub fn resolve(definitions: &[Constant], references: &[Constant]) -> Vec<ResolvedReference> {
     let definition_by_qualified_name = definitions.iter().into_group_map_by(|definition| definition.qualified());
 
     let resolved_references: Vec<ResolvedReference> = references
@@ -22,10 +21,10 @@ pub fn resolve(definitions: &[Definition], references: &[Reference]) -> Vec<Reso
         .filter_map(|reference| resolve_reference(&definition_by_qualified_name, reference))
         .collect();
 
-    resolved_references.into_iter().sorted_by_key(|reference| reference.loc.begin).collect()
+    resolved_references.into_iter().sorted_by_key(|reference| reference.loc.begin.line).collect()
 }
 
-fn resolve_reference(definition_by_qualified_name: &HashMap<String, Vec<&Definition>>, reference: &Reference) -> Option<ResolvedReference> {
+fn resolve_reference(definition_by_qualified_name: &HashMap<String, Vec<&Constant>>, reference: &Constant) -> Option<ResolvedReference> {
     let name = &reference.name;
 
     if name.starts_with("::") {
@@ -33,17 +32,12 @@ fn resolve_reference(definition_by_qualified_name: &HashMap<String, Vec<&Definit
 
         definition_by_qualified_name.get(qualified_name).map(|_| ResolvedReference {
             name: qualified_name.to_owned(),
-            loc: reference.loc,
-            path: reference.path.clone(),
+            loc: reference.loc.clone(),
         })
     } else {
         let name = reference.nestings().into_iter().find(|nesting| definition_by_qualified_name.contains_key(nesting));
 
-        name.map(|name| ResolvedReference {
-            name,
-            loc: reference.loc,
-            path: reference.path.clone(),
-        })
+        name.map(|name| ResolvedReference { name, loc: reference.loc.clone() })
     }
 }
 

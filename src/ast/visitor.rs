@@ -5,21 +5,41 @@ use lib_ruby_parser::{
     traverse::visitor,
     Node,
 };
+use line_col::LineColLookup;
 
-use super::constant::Constant;
+use super::{
+    constant::{CaretPos, Constant},
+    Loc,
+};
 
-pub struct Visitor {
+pub struct Visitor<'a> {
     pub path: PathBuf,
+    pub line_lookup: &'a LineColLookup<'a>,
     pub definitions: Vec<Constant>,
     pub references: Vec<Constant>,
 }
 
-impl Visitor {
-    pub fn new(path: &Path) -> Self {
+impl<'a> Visitor<'a> {
+    pub fn new(path: &Path, line_lookup: &'a LineColLookup<'a>) -> Self {
         Self {
             path: path.to_owned(),
+            line_lookup,
             definitions: Vec::new(),
             references: Vec::new(),
+        }
+    }
+
+    fn build_loc(&self, parser_loc: lib_ruby_parser::Loc) -> Loc {
+        let (begin_line, begin_column) = self.line_lookup.get(parser_loc.begin);
+        let (end_line, end_column) = self.line_lookup.get(parser_loc.begin);
+
+        Loc {
+            path: self.path.clone(),
+            begin: CaretPos {
+                line: begin_line,
+                column: begin_column,
+            },
+            end: CaretPos { line: end_line, column: end_column },
         }
     }
 }
@@ -56,7 +76,14 @@ fn fetch_const_scope_name(scope: &nodes::Node) -> String {
     }
 }
 
-fn nest_constants(path: &Path, parent_name: &str, child_constants: Vec<Constant>) -> Vec<Constant> {
+fn fetch_const_loc(name: &Node) -> lib_ruby_parser::Loc {
+    match name {
+        Node::Const(node) => node.expression_l,
+        other => panic!("Encountered an unexpected node type: '{:?}'", other),
+    }
+}
+
+fn nest_constants(_path: &Path, parent_name: &str, child_constants: Vec<Constant>) -> Vec<Constant> {
     let mut constants = Vec::new();
 
     for child_constant in child_constants {
@@ -67,7 +94,6 @@ fn nest_constants(path: &Path, parent_name: &str, child_constants: Vec<Constant>
         };
 
         constants.push(Constant {
-            path: path.to_owned(),
             name: child_constant.name.clone(),
             loc: child_constant.loc,
             scope: Some(scope),
@@ -77,18 +103,18 @@ fn nest_constants(path: &Path, parent_name: &str, child_constants: Vec<Constant>
     constants
 }
 
-impl visitor::Visitor for Visitor {
+impl<'a> visitor::Visitor for Visitor<'a> {
     fn on_class(&mut self, node: &nodes::Class) {
         let name = fetch_const_name(&node.name);
+        let loc = fetch_const_loc(&node.name);
 
         let definition = Constant {
-            path: self.path.clone(),
             scope: None,
             name: name.clone(),
-            loc: node.keyword_l,
+            loc: self.build_loc(loc),
         };
 
-        let mut visitor = Visitor::new(&self.path);
+        let mut visitor = Visitor::new(&self.path, self.line_lookup);
 
         if let Some(body) = node.body.as_ref() {
             visitor.visit(body);
@@ -102,15 +128,15 @@ impl visitor::Visitor for Visitor {
 
     fn on_module(&mut self, node: &nodes::Module) {
         let name = fetch_const_name(&node.name);
+        let loc = fetch_const_loc(&node.name);
 
         let definition = Constant {
-            path: self.path.clone(),
             scope: None,
             name: name.clone(),
-            loc: node.keyword_l,
+            loc: self.build_loc(loc),
         };
 
-        let mut visitor = Visitor::new(&self.path);
+        let mut visitor = Visitor::new(&self.path, self.line_lookup);
 
         if let Some(body) = node.body.as_ref() {
             visitor.visit(body);
@@ -125,9 +151,8 @@ impl visitor::Visitor for Visitor {
         let name = fetch_const_const_name(node);
 
         let reference = Constant {
-            path: self.path.clone(),
             name,
-            loc: node.name_l,
+            loc: self.build_loc(node.expression_l),
             scope: None,
         };
 
@@ -140,8 +165,7 @@ impl visitor::Visitor for Visitor {
         let definition = Constant {
             name,
             scope: None,
-            path: self.path.clone(),
-            loc: node.name_l,
+            loc: self.build_loc(node.name_l),
         };
 
         self.definitions.push(definition);
