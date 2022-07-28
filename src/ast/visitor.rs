@@ -14,15 +14,17 @@ use super::{
 
 pub struct Visitor<'a> {
     pub path: PathBuf,
+    pub root_path: PathBuf,
     pub line_lookup: &'a LineColLookup<'a>,
     pub definitions: Vec<Constant>,
     pub references: Vec<Constant>,
 }
 
 impl<'a> Visitor<'a> {
-    pub fn new(path: &Path, line_lookup: &'a LineColLookup<'a>) -> Self {
+    pub fn new(root_path: &Path, path: &Path, line_lookup: &'a LineColLookup<'a>) -> Self {
         Self {
             path: path.to_owned(),
+            root_path: root_path.to_owned(),
             line_lookup,
             definitions: Vec::new(),
             references: Vec::new(),
@@ -35,6 +37,7 @@ impl<'a> Visitor<'a> {
 
         Loc {
             path: self.path.clone(),
+            root_path: self.root_path.clone(),
             begin: CaretPos {
                 line: begin_line,
                 column: begin_column,
@@ -114,7 +117,7 @@ impl<'a> visitor::Visitor for Visitor<'a> {
             loc: self.build_loc(loc),
         };
 
-        let mut visitor = Visitor::new(&self.path, self.line_lookup);
+        let mut visitor = Visitor::new(&self.root_path, &self.path, self.line_lookup);
 
         if let Some(body) = node.body.as_ref() {
             visitor.visit(body);
@@ -136,7 +139,7 @@ impl<'a> visitor::Visitor for Visitor<'a> {
             loc: self.build_loc(loc),
         };
 
-        let mut visitor = Visitor::new(&self.path, self.line_lookup);
+        let mut visitor = Visitor::new(&self.root_path, &self.path, self.line_lookup);
 
         if let Some(body) = node.body.as_ref() {
             visitor.visit(body);

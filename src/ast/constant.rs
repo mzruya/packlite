@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
@@ -12,6 +12,7 @@ pub struct Constant {
 #[derive(Debug, Clone, Serialize)]
 pub struct Loc {
     pub path: PathBuf,
+    pub root_path: PathBuf,
     pub begin: CaretPos,
     pub end: CaretPos,
 }
@@ -47,6 +48,12 @@ impl Constant {
     }
 }
 
+impl Loc {
+    pub fn relative_path(&self) -> &Path {
+        self.path.strip_prefix(&self.root_path).unwrap()
+    }
+}
+
 fn qualified(scope: &Option<String>, name: &str) -> String {
     if let Some(scope) = scope {
         format!("{}::{}", scope, name)
@@ -66,6 +73,7 @@ mod tests {
             name: "InC".to_owned(),
             loc: Loc {
                 path: PathBuf::from_str("./fixtures/nested_classes.rb").unwrap(),
+                root_path: PathBuf::from_str("./").unwrap(),
                 begin: CaretPos { line: 1, column: 1 },
                 end: CaretPos { line: 1, column: 1 },
             },

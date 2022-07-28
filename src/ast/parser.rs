@@ -11,9 +11,9 @@ pub struct ParsedFile {
     pub references: Vec<Constant>,
 }
 
-pub fn parse(path: &Path) -> ParsedFile {
+pub fn parse(root_path: &Path, path: &Path) -> ParsedFile {
     let text = std::fs::read_to_string(path).unwrap();
-    let (definitions, references) = parse_text(&text, path);
+    let (definitions, references) = parse_text(&text, root_path, path);
 
     ParsedFile {
         path: path.to_owned(),
@@ -22,7 +22,7 @@ pub fn parse(path: &Path) -> ParsedFile {
     }
 }
 
-fn parse_text(text: &str, path: &Path) -> (Vec<Constant>, Vec<Constant>) {
+fn parse_text(text: &str, root_path: &Path, path: &Path) -> (Vec<Constant>, Vec<Constant>) {
     let parser = Parser::new(text, ParserOptions::default());
     let ast = parser.do_parse().ast;
 
@@ -31,7 +31,7 @@ fn parse_text(text: &str, path: &Path) -> (Vec<Constant>, Vec<Constant>) {
     }
 
     let line_lookup = LineColLookup::new(text);
-    let mut visitor = visitor::Visitor::new(path, &line_lookup);
+    let mut visitor = visitor::Visitor::new(root_path, path, &line_lookup);
     visitor.visit(&ast.unwrap());
 
     (visitor.definitions, visitor.references)

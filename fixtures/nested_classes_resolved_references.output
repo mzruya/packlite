@@ -3,6 +3,7 @@
         name: "A::B::C",
         loc: Loc {
             path: "./fixtures/nested_classes.rb",
+            root_path: "./",
             begin: CaretPos {
                 line: 28,
                 column: 1,

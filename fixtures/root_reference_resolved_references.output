@@ -3,6 +3,7 @@
         name: "A",
         loc: Loc {
             path: "./fixtures/root_reference.rb",
+            root_path: "./",
             begin: CaretPos {
                 line: 6,
                 column: 7,
@@ -17,6 +18,7 @@
         name: "A",
         loc: Loc {
             path: "./fixtures/root_reference.rb",
+            root_path: "./",
             begin: CaretPos {
                 line: 7,
                 column: 7,
@@ -31,6 +33,7 @@
         name: "A::B",
         loc: Loc {
             path: "./fixtures/root_reference.rb",
+            root_path: "./",
             begin: CaretPos {
                 line: 8,
                 column: 7,
@@ -45,6 +48,7 @@
         name: "B",
         loc: Loc {
             path: "./fixtures/root_reference.rb",
+            root_path: "./",
             begin: CaretPos {
                 line: 9,
                 column: 7,

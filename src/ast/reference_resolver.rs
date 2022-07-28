@@ -46,7 +46,7 @@ mod tests {
     use std::path::Path;
 
     fn test_fixture(ruby_file_path: &str, expectation_file_path: &str) {
-        let parsed_file = crate::ast::parse_ast(Path::new(ruby_file_path));
+        let parsed_file = crate::ast::parse_ast(Path::new("./"), Path::new(ruby_file_path));
         let actual = format!("{:#?}", super::resolve(&parsed_file.definitions, &parsed_file.references));
 
         if std::env::var("OVERWRITE_FIXTURES").is_ok() {

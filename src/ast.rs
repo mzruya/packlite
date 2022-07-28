@@ -18,7 +18,7 @@ mod tests {
     }
 
     fn test_fixture(ruby_file_path: &str, expectation_file_path: &str) {
-        let parsed_file = super::parse_ast(Path::new(ruby_file_path));
+        let parsed_file = super::parse_ast(Path::new("./"), Path::new(ruby_file_path));
 
         let actual = remove_absolute_paths(format!("{parsed_file:#?}"));
 
