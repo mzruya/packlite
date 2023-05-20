@@ -63,6 +63,7 @@ pub fn all_packages(root_path: &Path, package_paths: &[PathBuf]) -> Vec<Package>
         .collect()
 }
 
+#[instrument(skip_all)]
 fn paths_to_scan(root_path: &Path, package_paths: &[PathBuf]) -> Vec<PathBuf> {
     let mut paths_to_scan: Vec<PathBuf> = Vec::new();
 

@@ -2,15 +2,9 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use serde::Serialize;
 
-use crate::ast::{Constant, Loc};
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ResolvedReference {
-    pub name: String,
-    pub loc: Loc,
-}
+use super::ResolvedReference;
+use crate::ast::Constant;
 
 pub fn resolve(definitions: &[Constant], references: &[Constant]) -> Vec<ResolvedReference> {
     let definition_by_qualified_name = definitions.iter().into_group_map_by(|definition| definition.qualified());

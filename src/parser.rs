@@ -5,11 +5,11 @@ use std::{
 
 use rayon::iter::{ParallelBridge, ParallelIterator};
 use serde::Serialize;
-use tracing::trace;
+
 
 use crate::{
     ast::{self, Loc},
-    files,
+    files, resolver,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -39,23 +39,7 @@ pub fn parse_ruby_files(root_path: &Path, ruby_files: &[PathBuf]) -> Vec<ast::Pa
     ruby_files.iter().par_bridge().map(|path| ast::parse_ast(&root_path, path)).collect()
 }
 
-pub fn resolve_references(parsed_files: Vec<ast::ParsedFile>) -> (Vec<ast::Constant>, Vec<ast::ResolvedReference>) {
-    let mut definitions: Vec<ast::Constant> = Vec::new();
-    let mut references: Vec<ast::Constant> = Vec::new();
-
-    for mut parsed_file in parsed_files {
-        definitions.append(&mut parsed_file.definitions);
-        references.append(&mut parsed_file.references);
-    }
-
-    // Resolves ruby constant references to the fully qualified constant they refer to.
-    trace!("reference_resolver::resolve()",);
-    let references = ast::resolve(&definitions, &references);
-
-    (definitions, references)
-}
-
-pub fn apply_package_metadata(definitions: Vec<ast::Constant>, references: Vec<ast::ResolvedReference>, packages: Vec<files::Package>, public_path: &str, ignore_constants: &[String]) -> Project {
+pub fn apply_package_metadata(definitions: Vec<ast::Constant>, references: Vec<resolver::ResolvedReference>, packages: Vec<files::Package>, public_path: &str, ignore_constants: &[String]) -> Project {
     let package_name_by_path: HashMap<&Path, &str> = packages.iter().map(|package| (package.root.as_ref(), package.name.as_ref())).collect();
 
     let definitions = definitions
@@ -69,7 +53,7 @@ pub fn apply_package_metadata(definitions: Vec<ast::Constant>, references: Vec<a
             let mut package_name = "root".to_string();
 
             if let Some((path, name)) = package {
-                let relative_path = definition.loc.path.strip_prefix(&path).unwrap();
+                let relative_path = definition.loc.path.strip_prefix(path).unwrap();
                 public = relative_path.starts_with(public_path);
                 package_name = name;
             }

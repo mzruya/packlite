@@ -27,7 +27,7 @@ impl Constant {
     pub fn nestings(&self) -> Vec<String> {
         let mut nestings = Vec::new();
 
-        let unwrapped_scope = self.scope.clone().unwrap_or_else(|| "".to_string());
+        let unwrapped_scope = self.scope.clone().unwrap_or_default();
         let mut remaining_parts: Vec<&str> = unwrapped_scope.split("::").collect();
 
         while let Some(nesting_part) = remaining_parts.pop() {

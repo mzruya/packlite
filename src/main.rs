@@ -1,31 +1,44 @@
 mod ast;
 mod files;
 mod parser;
+mod resolver;
 mod validator;
 use std::path::PathBuf;
 
 use clap::Parser;
 use itertools::Itertools;
-use tracing::debug;
-
 use std::io::prelude::*;
+use tracing::{debug, instrument};
+
+#[derive(clap::Args, Debug)]
+struct UpdateDeprecations {
+    pack: Option<String>,
+}
+
+#[derive(clap::Subcommand, Debug)]
+enum Command {
+    UpdateDeprecations(UpdateDeprecations),
+}
 
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct CliCommand {
+    #[clap(subcommand)]
+    command: Command,
+
     /// Root directory of the project
-    #[clap(short, long)]
+    #[clap(short, long, default_value = ".")]
     root_dir: PathBuf,
 
     /// Where a package defines its public api
     #[clap(short, long, default_value = "app/public")]
     public_path: String,
 
-    /// Where a package defines its public api
+    /// paths to scan for packages
     #[clap(long)]
     package_paths: Vec<PathBuf>,
 
-    /// Root directory of the project
+    /// constants that we should omit from reference resolution
     #[clap(short, long)]
     ignore_constants: Vec<String>,
 }
@@ -65,40 +78,41 @@ fn install_logger() {
         .init();
 }
 
+#[instrument(skip_all)]
 fn do_run(command: CliCommand) {
-    debug!("files::all()");
+    debug!("reading file paths");
     let ruby_files = files::all_ruby_files(&command.root_dir, &command.package_paths);
     let packages = files::all_packages(&command.root_dir, &command.package_paths);
     debug!("found {} packages and {} ruby files", packages.len(), ruby_files.len());
 
-    // Convert file paths to actual data, by parsing the ast, doing reference lookups and the whole shebang
-    debug!("parser::parse_ruby_files()");
+    debug!("parsing ruby files");
     let parsed_files = parser::parse_ruby_files(&command.root_dir, &ruby_files);
 
-    debug!("parser::resolve_references()");
-    let (definitions, references) = parser::resolve_references(parsed_files);
-
-    debug!("parser::apply_package_metadata()");
+    debug!("resolving references");
+    let (definitions, references) = resolver::resolve_references(parsed_files);
     let project = parser::apply_package_metadata(definitions, references, packages, &command.public_path, &command.ignored_constants());
 
-    debug!("validator::validate()");
-    let violations = validator::validate(&project);
-    debug!("found {} violations", violations.len());
-
-    debug!("validator::validate()");
-    let deprecated_references = validator::deprecated_references(&violations);
-    debug!("found {} violations", violations.len());
-
-    debug!("packages::log()");
-    std::fs::File::create("/users/matan.zruya/desktop/project.json")
+    std::fs::File::create("/users/matan.zruya/desktop/output.json")
         .unwrap()
         .write_all(serde_json::to_string_pretty(&project).unwrap().as_bytes())
         .unwrap();
 
-    std::fs::File::create("/users/matan.zruya/desktop/validations.json")
-        .unwrap()
-        .write_all(serde_json::to_string_pretty(&violations).unwrap().as_bytes())
-        .unwrap();
+    debug!("running {:?}", command.command);
+    match command.command {
+        Command::UpdateDeprecations(_cmd) => {}
+    }
+}
+
+fn update_deprecations(command: &UpdateDeprecations, project: &parser::Project) {
+    let violations = validator::validate(project);
+    let mut deprecated_references = validator::deprecated_references(&violations);
+
+    if let Some(pack) = &command.pack {
+        deprecated_references = deprecated_references
+            .into_iter()
+            .filter(|deprecated_reference| &deprecated_reference.violating_pack == pack)
+            .collect_vec();
+    }
 
     for deprecated_reference in deprecated_references {
         let package = project.packages.iter().find(|package| package.name == deprecated_reference.violating_pack).unwrap();
@@ -109,5 +123,4 @@ fn do_run(command: CliCommand) {
             .write_all(serde_yaml::to_string(&deprecated_reference.deprecated_references).unwrap().as_bytes())
             .unwrap();
     }
-    debug!("end");
 }
